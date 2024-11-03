@@ -1,0 +1,19 @@
+Up to date
+\begin{logicproof}{1}
+p \wedge q \vee p \wedge r & Premise\\
+\begin{subproof}
+p \wedge q & Assumption\\
+p & $\wedge_{e1}$ 2\\
+q & $\wedge_{e2}$ 2\\
+q \vee r & $\vee_{i1}$ 4\\
+p \wedge (q \vee r) & $\wedge_i$ 3,5
+\end{subproof}
+\begin{subproof}
+p \wedge r & Assumption\\
+p & $\wedge_{e1}$ 7\\
+r & $\wedge_{e2}$ 7\\
+q \vee r & $\vee_{i2}$ 9\\
+p \wedge (q \vee r) & $\wedge_i$ 8,10
+\end{subproof}
+p \wedge (q \vee r) & $\vee_e$ 1,(2,6),(7,11)
+\end{logicproof}
