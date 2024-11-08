@@ -3,5 +3,6 @@ import Machine
 import Instance 
 import LatexGen 
 main :: IO ()
-main = 
+main = do
+    putStrLn "-----"
     print example

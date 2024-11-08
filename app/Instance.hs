@@ -1,4 +1,4 @@
-module Instance where 
+module Instance where
 
 import Machine
 import LatexGen
@@ -9,24 +9,24 @@ q = Atom "q"
 
 r = Atom "r"
 
-premises = [(p `And` q) `Or` (p `And` r)]
-conclusion = p `And` (q `Or` r)
+premises = [p `Or` q]
+conclusion = (p `Imply` q) `Imply` q
 
 sequent = Sequent premises conclusion
 
-example :: LatexProof
-example = do
-    proof
-    premise premises
-    assume (p `And `q)
-    and_elim1 2 
-    and_elim2 2
-    or_intro1 4 r 
-    and_intro 3 5
-    new_assume (p `And` r)
-    and_elim1 7 
-    and_elim2 7
-    or_intro2 9 q 
-    and_intro 8 10
-    or_elim 1 (2,6) (7,11)
-    qed
+example :: Proof
+example =
+    foldl1 (>>) pro
+    where pro = [proof, premise premises, assume p ,
+                assume (p `Imply` q),
+                imply_elim 3 2,
+                imply_intro (3,4),
+                new_assume q ,
+                assume (p `Imply` q),
+                copy 6,
+                imply_intro (7,8),
+                or_elim 1 (2,5) (6,9),
+                qed]
+
+
+

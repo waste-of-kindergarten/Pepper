@@ -1,7 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -214,6 +213,7 @@ instance Monad (State s) where
 class Monad m => ProofMonad a m | m -> a where
     proof :: m a
     premise :: Premises -> m a
+    copy :: Int -> m a 
     qed :: m a
     new_assume :: Formula -> m a
     assume :: Formula -> m a
@@ -242,6 +242,14 @@ instance ProofMonad Sequent (State ProofLines) where
                                                             in [ProofLine ϕ "Assumption" (length s: tail lastdomain)]))
     premise :: Premises -> State ProofLines Sequent
     premise = \premises -> State (\s -> (EmptySequent, s ++ ((\t -> ProofLine t "Premise" [1]) <$> premises)))
+    copy :: Int -> State ProofLines Sequent 
+    copy = \n -> State (\s -> (EmptySequent, s ++ let lastdomain = (getDomain . last) s 
+                                                      proofline = s !! n 
+                                                      ϕ = getFormula proofline 
+                                                      domain = getDomain proofline 
+                                                      in [ProofLine ϕ ("Copy " ++ show n) 
+                                                            (if domain `isSuffixOf` lastdomain then lastdomain 
+                                                                else error "cannot copy on formula outside current scope") ]))
     qed :: State ProofLines Sequent
     qed = State (\s -> let premises = [getFormula premise | premise <- s, getRule premise == "Premise"]
                            lastline = last s
@@ -313,7 +321,8 @@ instance ProofMonad Sequent (State ProofLines) where
                                                                             then lastdomain
                                                                             else error "cannot ¬¬ₑ on formula outside current scope")]))
     imply_intro :: (Int, Int) -> State ProofLines Sequent
-    imply_intro = \(m,n) -> State (\s -> (EmptySequent, let proofline1 = s !! m
+    imply_intro = \(m,n) -> State (\s -> (EmptySequent, 
+                                                        let proofline1 = s !! m
                                                             domain1 = getDomain proofline1
                                                             ϕ = getFormula proofline1
                                                             proofline2 = s !! n
@@ -321,15 +330,15 @@ instance ProofMonad Sequent (State ProofLines) where
                                                             ψ = getFormula proofline2
                                                             lastline = last s
                                                             lastdomain = getDomain lastline
-                                                            flag = (getDomain (s !! (m - 1)) == domain1) &&
+                                                            flag = (getDomain (s !! (m - 1)) == tail domain1) &&
                                                                     (if (n + 1) < length s then getDomain (s !! (n + 1)) == domain2 else True)
-                                                            in [ProofLine (implies_introduction ϕ ψ)
+                                                            in  s ++ [ProofLine (implies_introduction ϕ ψ)
                                                                         ("→ᵢ " ++ show (m,n))
-                                                                        (if flag && domain1 == domain2
+                                                                        (if flag && (domain1 == domain2)
                                                                             then if lastdomain == domain2 then tail lastdomain
                                                                                     else if lastdomain == tail domain2 then lastdomain
-                                                                                        else error "cannot →ᵢ on formulas outside current scope"
-                                                                            else error "cannot →ᵢ on formulas outside current scope")]))
+                                                                                        else  error "cannot →ᵢ on formulas outside current scope"
+                                                                            else  error "cannot →ᵢ on formulas outside current scope")]))
     imply_elim :: Int -> Int -> State ProofLines Sequent
     imply_elim = \m n -> State (\s -> (EmptySequent, let proofline1 = s !! m
                                                          domain1 = getDomain proofline1

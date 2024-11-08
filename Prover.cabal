@@ -25,10 +25,10 @@ executable Prover
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Instance, Machine, LatexGen
+    other-modules: Instance, Machine, LatexGen, Parser
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.12.0.0
+    build-depends:    base ^>=4.12.0.0, mtl
     hs-source-dirs:   app
     default-language: Haskell2010

@@ -3,9 +3,11 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns #-}
 module LatexGen where
 import Machine
 import Data.List(isSuffixOf)
+import Debug.Trace (trace)
 
 
 formulaLatexGen :: Formula -> String
@@ -51,6 +53,14 @@ emptyline' = LatexProofLine (LatexFormula Bottom) "" []
 instance ProofMonad LatexSequent (State LatexProofLines) where
     proof :: State LatexProofLines LatexSequent
     proof = State (\s -> (LatexSequent EmptySequent,[emptyline']))
+    copy :: Int -> State LatexProofLines LatexSequent
+    copy = \n -> State (\s -> (LatexSequent EmptySequent,s ++ let lastdomain = (getDomain' . last) s
+                                                                  proofline = s !! n
+                                                                  LatexFormula ϕ = getFormula' proofline
+                                                                  domain = getDomain' proofline
+                                                                  in [LatexProofLine (LatexFormula ϕ) ("Copy " ++ show n)
+                                                                            (if domain `isSuffixOf` lastdomain then lastdomain
+                                                                                    else error "cannot copy on formula outside current scope")]))
     new_assume :: Formula -> State LatexProofLines LatexSequent
     new_assume = \ϕ -> State (\s -> (LatexSequent EmptySequent, s ++ let lastdomain = (getDomain' . last) s
                                                             in [LatexProofLine (LatexFormula ϕ) "Assumption" (length s: tail lastdomain)]))
@@ -59,10 +69,10 @@ instance ProofMonad LatexSequent (State LatexProofLines) where
     qed :: State LatexProofLines LatexSequent
     qed = State (\s -> let  premises = [ formula | (LatexProofLine (LatexFormula formula) rule _) <- s, rule == "Premise"]
                             lastline = last s
-                            conclusion = if getDomain' lastline == [1]
-                                            then let (LatexFormula conclusion) = getFormula' lastline in conclusion
+                            !conclusion = if getDomain' lastline == [1]
+                                            then let LatexFormula c = getFormula' lastline in c
                                             else error "cannot qed because boxes are not closed"
-                          in (LatexSequent (Sequent premises conclusion),s))
+                          in  (LatexSequent (Sequent premises conclusion),s))
     assume :: Formula -> State LatexProofLines LatexSequent
     assume = \ϕ -> State (\s -> (LatexSequent EmptySequent, s ++ let lastdomain = (getDomain' . last) s
                                                         in [LatexProofLine (LatexFormula ϕ) "Assumption" (length s:lastdomain)]))
@@ -135,9 +145,9 @@ instance ProofMonad LatexSequent (State LatexProofLines) where
                                                                             LatexFormula ψ = getFormula' latexProofLine2
                                                                             lastline = last s
                                                                             lastdomain = getDomain' lastline
-                                                                            flag = (getDomain' (s !! (m - 1)) == domain1) &&
+                                                                            flag = (getDomain' (s !! (m - 1)) == tail domain1) &&
                                                                                     (if (n + 1) < length s then getDomain' (s !! (n + 1)) == domain2 else True)
-                                                                            in [LatexProofLine (LatexFormula $ implies_introduction ϕ ψ)
+                                                                            in s ++ [LatexProofLine (LatexFormula $ implies_introduction ϕ ψ)
                                                                                         ("$\\rightarrow_i$ " ++ show (m,n))
                                                                                         (if flag && domain1 == domain2
                                                                                             then if lastdomain == domain2 then tail lastdomain
@@ -295,7 +305,9 @@ instance ProofMonad LatexSequent (State LatexProofLines) where
 
 instance Show LatexProofLines where
     show :: LatexProofLines -> String
-    show xs = let depth = maximum [length t | (LatexProofLine _ _ t) <- xs]
+    show xs = let depth = case xs of
+                                [] -> 0
+                                _ -> maximum [length t | (LatexProofLine _ _ t) <- xs]
                                     in "\\begin{logicproof}{" ++ (show $ depth - 1) ++ "}\n" ++
                                         (drop 3 $ func xs 1 [1]) ++ "\n\\end{logicproof}"
                 where func (x:xs) n stack
