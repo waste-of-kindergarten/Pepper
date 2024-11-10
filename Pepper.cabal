@@ -1,5 +1,5 @@
 cabal-version:      2.4
-name:               Prover
+name:               Pepper
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -13,8 +13,8 @@ version:            0.1.0.0
 
 -- The license under which the package is released.
 -- license:
-author:             waste-of-kindergarten
-maintainer:         2020141461068@stu.scu.edu.cn
+author:             Alfred Xiang
+maintainer:         shihaox@student.chalmers.se
 
 -- A copyright notice.
 -- copyright:
@@ -29,6 +29,6 @@ executable Prover
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.12.0.0, mtl
+    build-depends:    base ^>=4.12.0.0
     hs-source-dirs:   app
     default-language: Haskell2010

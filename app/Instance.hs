@@ -14,7 +14,7 @@ conclusion = (p `Imply` q) `Imply` q
 
 sequent = Sequent premises conclusion
 
-example :: Proof
+example :: Proof -- LatexProof For latex
 example =
     foldl1 (>>) pro
     where pro = [proof, premise premises, assume p ,

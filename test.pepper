@@ -1,0 +1,12 @@
+proof 
+premise Or (Atom p) (Atom q)
+assume Atom p 
+assume Imply (Atom p) (Atom q)
+imply_elim 3 2 
+imply_intro 3-4
+new_assume Atom q 
+assume Imply (Atom p) (Atom q)
+copy 6 
+imply_intro 7-8
+or_elim 1 2-5 6-9
+qed

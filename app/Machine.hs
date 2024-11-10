@@ -184,7 +184,7 @@ instance Show ProofLine where
 emptyline :: ProofLine
 emptyline = ProofLine Bottom ""  []
 
-type ProofLines = [ProofLine]
+type ProofLines = [ProofLine] 
 
 instance Show ProofLines where
   show :: ProofLines -> String
